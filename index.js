@@ -1,32 +1,48 @@
 const root = document.querySelector("#content");
 
 async function getFolderFiles({ name, path }, depth) {
+	// Get files and folders
 	const contents = await fetch(
 		`https://api.github.com/repos/DoctorBracewell/archive/contents/${path}`
 	).then((res) => res.json());
 
+	// Create a header for a folder
+	const details = document.createElement("details");
+	const summary = document.createElement("summary");
 	const header = document.createElement(`h${depth + 1 > 6 ? "p" : depth + 1}`);
-	header.style.marginLeft = `${depth * 30}px`;
+	details.style.marginLeft = `${depth * 30}px`;
 	header.textContent = name + ":";
-	root.appendChild(header);
 
+	summary.appendChild(header);
+	details.appendChild(summary);
+
+	// Recursively add all the folders within the current folder
 	const directories = contents.filter((content) => content.type === "dir");
 	for (const directory of directories) {
 		getFolderFiles(directory, depth + 1);
 	}
 
+	// Don't show root files
+	if (depth === 0) return;
+
+	// Display all the files within a folder
 	const wrapper = document.createElement("p");
 	const files = contents.filter((content) => content.type === "file");
+
 	for (const file of files) {
+		const anchorWrapper = document.createElement("p");
 		const anchor = document.createElement("a");
 		anchor.setAttribute("href", file.path);
-		anchor.style.marginLeft = `${(depth + 1) * 30}px`;
+		anchor.style.marginLeft = `${(depth + 1) * 20}px`;
 		anchor.textContent = file.name;
 
-		wrapper.appendChild(anchor);
+		anchorWrapper.appendChild(anchor);
+		wrapper.appendChild(anchorWrapper);
 	}
 
-	root.appendChild(wrapper);
+	details.appendChild(wrapper);
+
+	root.appendChild(details);
 }
 
 getFolderFiles(

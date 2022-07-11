@@ -1,6 +1,4 @@
-const root = document.querySelector("#content");
-
-async function getFolderFiles({ name, path }, depth) {
+async function getFolderFiles({ name, path }, root, depth) {
 	// Get files and folders
 	const contents = await fetch(
 		`https://api.github.com/repos/DoctorBracewell/archive/contents/${path}`
@@ -10,7 +8,7 @@ async function getFolderFiles({ name, path }, depth) {
 	const details = document.createElement("details");
 	const summary = document.createElement("summary");
 	const header = document.createElement(`h${depth + 1 > 6 ? "p" : depth + 1}`);
-	details.style.marginLeft = `${depth * 30}px`;
+	details.style.marginLeft = `${depth * 20}px`;
 	header.textContent = name + ":";
 
 	summary.appendChild(header);
@@ -19,11 +17,8 @@ async function getFolderFiles({ name, path }, depth) {
 	// Recursively add all the folders within the current folder
 	const directories = contents.filter((content) => content.type === "dir");
 	for (const directory of directories) {
-		getFolderFiles(directory, depth + 1);
+		getFolderFiles(directory, details, depth + 1);
 	}
-
-	// Don't show root files
-	if (depth === 0) return;
 
 	// Display all the files within a folder
 	const wrapper = document.createElement("p");
@@ -41,14 +36,15 @@ async function getFolderFiles({ name, path }, depth) {
 	}
 
 	details.appendChild(wrapper);
-
 	root.appendChild(details);
 }
 
-getFolderFiles(
-	{
-		name: "Archive",
-		path: "",
-	},
-	0
-);
+const contents = await fetch(
+	`https://api.github.com/repos/DoctorBracewell/archive/contents/`
+).then((res) => res.json());
+
+const directories = contents.filter((content) => content.type === "dir");
+
+for (const directory of directories) {
+	getFolderFiles(directory, document.querySelector("#archive"), 1);
+}
